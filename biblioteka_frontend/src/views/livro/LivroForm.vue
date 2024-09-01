@@ -67,7 +67,7 @@ async function onSubmit(values: any, actions: any) {
         }
     } else {
         try {
-
+            values.numeroCopiasDisponiveis = values.numeroCopiasTotais;
             await LivroService.create(values);
         } catch (err) {
             console.error("Erro ao cadastrar novo livro:", err);
@@ -282,15 +282,6 @@ onMounted(async () => {
                                 <Field name="qtdPaginas" v-model="state.livro.qtdPaginas" v-slot="{ field, errors }">
                                     <v-text-field type="number" v-bind="field" label="Quantidade de Páginas"
                                         variant="outlined" v-model="state.livro.qtdPaginas" :error-messages="errors">
-                                    </v-text-field>
-                                </Field>
-                            </v-col>
-                            <v-col cols="4">
-                                <Field name="numeroCopiasDisponiveis" v-model="state.livro.numeroCopiasDisponiveis"
-                                    v-slot="{ field, errors }">
-                                    <v-text-field type="number" v-bind="field" label="Número de Cópias Disponíveis"
-                                        variant="outlined" v-model="state.livro.numeroCopiasDisponiveis"
-                                        :error-messages="errors">
                                     </v-text-field>
                                 </Field>
                             </v-col>

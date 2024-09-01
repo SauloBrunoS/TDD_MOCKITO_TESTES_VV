@@ -168,10 +168,12 @@ export enum Nacionalidade {
 }
 
 export enum StatusReserva {
+  NENHUM = 'Nenhum',
   EM_ANDAMENTO = 'Em andamento',
   EM_ESPERA = 'Em espera',
   CANCELADA = 'Cancelada',
-  ATENDIDA = 'Atendida'
+  ATENDIDA = 'Atendida',
+  EXPIRADA = 'Expirada'
 }
 
 export enum LivroDevolvido {

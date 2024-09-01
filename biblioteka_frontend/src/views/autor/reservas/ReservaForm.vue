@@ -2,10 +2,11 @@
 import { reactive, watch } from "vue";
 import { Form, Field } from 'vee-validate';
 import { useNotificationStore } from '@/stores/Notification';
-import { Emprestimo, Leitor, Livro } from '@/types';
-import EmprestimoService from "@/api/EmprestimoService";
+import { Leitor, Livro, Reserva } from '@/types';
 import LivroService from "@/api/LivroService";
 import LeitorService from "@/api/LeitorService";
+import ReservaService from "@/api/ReservaService";
+
 const emit = defineEmits(['submitted', 'canceled'])
 
 const props = defineProps<{
@@ -15,7 +16,7 @@ const props = defineProps<{
 }>();
 
 const state = reactive({
-    emprestimo: {} as Emprestimo,
+    reserva: {} as Reserva,
     livro: null as unknown as Livro,
     dialog: false as boolean,
     listaLivros: [] as Livro[],
@@ -30,14 +31,14 @@ const constant = {
 
 async function onSubmit(values: any, actions: any) {
     try {
-        if (props.leitorId != null)  await EmprestimoService.emprestar(props.leitorId, state.livro.id, state.senha);
-        if (props.livroId != null) await EmprestimoService.emprestar(state.leitor.id, props.livroId, state.senha);
+        if (props.leitorId != null)  await ReservaService.reservar(props.leitorId, state.livro.id, state.senha);
+        if (props.livroId != null) await  ReservaService.reservar(state.leitor.id, props.livroId, state.senha);
         emit("submitted")
         actions.resetForm();
     }
     catch (err) {
-        console.error("Erro ao cadastrar empréstimo:", err);
-        constant.notificationStore.notificar({ mensagem: "Erro ao ao cadastrar empréstimo!", tipoMensagem: "error", visibilidade: true })
+        console.error("Erro ao cadastrar reserva:", err);
+        constant.notificationStore.notificar({ mensagem: "Erro ao ao cadastrar reserva!", tipoMensagem: "error", visibilidade: true })
     }
 }
 
@@ -74,13 +75,12 @@ async function buscarLeitores(leitoresSearch: string) {
             const leitoresList = await LeitorService.findAllLeitoresWithCPFFilter(encodeUriSearch);
             state.listaLeitores = leitoresList;
         } catch (error) {
-            console.error("Erro ao buscar a lista de livros:", error);
+            console.error("Erro ao buscar a lista de leitores", error);
         }
     } else if (state.listaLeitores.length > 0) {
         state.listaLeitores = [];
     }
 }
-
 
 </script>
 
@@ -88,7 +88,7 @@ async function buscarLeitores(leitoresSearch: string) {
     <v-dialog v-model="state.dialog" persistent width="60%">
         <v-card>
             <v-card-title class="mx-auto my-4">
-                <span class="text-h5">Cadastrar Empréstimo</span>
+                <span class="text-h5">Cadastrar Reserva</span>
             </v-card-title>
             <v-card-text>
                 <Form @submit="onSubmit" @reset="cancel()">
@@ -111,7 +111,7 @@ async function buscarLeitores(leitoresSearch: string) {
                                         item-title="cpf" item-value="id" return-object
                                         label="Filtrar por CPF do Leitor" variant="outlined"
                                         @update:search="buscarLeitores"
-                                        no-data-text="Digite algum ISBN para buscar os livros"></v-autocomplete>
+                                        no-data-text="Digite algum CPF para buscar os leitores"></v-autocomplete>
                                 </Field>
                             </v-col>
                             <v-col cols="3" class="mt-6">

@@ -37,6 +37,18 @@ export default {
     }
   },
 
+  async findAllLeitoresWithCPFFilter(search: string): Promise<Leitor[]> {
+    try {
+      const {data} = await httpClient.get(`leitores/search/findAllWithCPFFilter?search=${search}`);
+      return data._embedded.leitores;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new Error(error.response?.data);
+      }
+      throw error;
+    }
+  },
+
   async getById(id: number): Promise<Leitor> {
     try {
       const { data } = await httpClient.get(`/leitores/${id}`);
@@ -47,31 +59,6 @@ export default {
       }
       throw error;
     }
-  },
-
-  async findSearchEmprestimosByLeitorId(
-    pagina: number,
-    itemPerPage: number,
-    sortBy: [{ key: keyof Leitor; order: string }],
-    search: string,
-    leitorId: number,
-    livroId: number,
-    devolvido: boolean
-  ) {
-    const { data } = await httpClient({
-      method: 'get',
-      url: `/leitores/${leitorId}/emprestimos`,
-      params: {
-        search: search ?? "",
-        livroId: livroId,
-        devolvido: devolvido,
-        page: pagina,
-        size: itemPerPage,
-        sort: `${sortBy?.[0]?.key ?? 'id'},${sortBy?.[0]?.order ?? 'desc'}`,
-      }
-    })
-    const { content: emprestimos, ...page } = data;
-    return { items: emprestimos, pagination: page }
   },
 
   async findSearchReservasByLeitorId(

@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import type { Pagination } from '../../api/adapters/BaseAdapters';
-import type { InfoDataTableServer, Emprestimo, Livro } from '../../types';
+import type { InfoDataTableServer, Emprestimo, Leitor } from '../../types';
 import type { DataTableHeader } from '../../types/vuetify';
 import { reactive, watchEffect } from 'vue';
 import { useNotificationStore } from '../../stores/Notification';
 import dayjs from 'dayjs';
-import LivroService from '@/api/LivroService';
+import LeitorService from '@/api/LeitorService';
 import { LivroDevolvido } from '@/types/enum';
 import EmprestimoForm from '../emprestimo/EmprestimoForm.vue';
 import DevolucaoForm from '../emprestimo/DevolucaoForm.vue';
@@ -19,7 +19,7 @@ const constant: {
 } = {
     cabecalhoEmprestimos: [
         { title: "Código do Empréstimo", align: "center", key: "id", sortable: true },
-        { title: "Livro", align: "center", key: "e.livro.isbn", sortable: true },
+        { title: "Leitor", align: "center", key: "e.leitor.cpf", sortable: true },
         { title: "Data de Empréstimo", align: "center", key: "dataEmprestimo", sortable: true },
         { title: "Data Limite", align: "center", key: "dataLimite", sortable: true },
         { title: "Data de Devolução", align: "center", key: "dataDevolucao", sortable: true },
@@ -45,26 +45,25 @@ const state = reactive({
     pagination: { pageSize: 5 } as Pagination,
     search: "" as string,
     dialogVisible: false as boolean,
-    listaLivros: [] as Livro[],
+    listaLeitores: [] as Leitor[],
     listaEmprestimos: [] as Emprestimo[],
     infoDataTableServer: {} as InfoDataTableServer,
     idEmprestimo: null as unknown as number,
-    livro: null as unknown as Livro,
+    leitor: null as unknown as Leitor,
     dialogVisibleDevolucao: false as boolean,
     dialogVisibleRenovacao: false as boolean,
     devolvido: null as unknown as boolean
 })
 
 const props = defineProps<{
-    leitorId: number
+    livroId: number
 }>();
 
 function loadItems({ search, page, itemsPerPage, sortBy }: InfoDataTableServer) {
     state.infoDataTableServer = { page, itemsPerPage, sortBy, search }
-    EmprestimoService.findSearchEmprestimosByLeitorId(page, itemsPerPage, sortBy, search, props.leitorId, state.livro?.id, state.devolvido)
+    EmprestimoService.findSearchEmprestimosByLivroId(page, itemsPerPage, sortBy, search, props.livroId, state.leitor?.id, state.devolvido)
         .then(({ items: emprestimos, pagination: page }) => {
             state.listaEmprestimos = emprestimos
-            console.log(state.listaEmprestimos)
             state.pagination.page = page.pageable.number
             state.pagination.total = page.totalElements
             state.pagination.pageCount = page.totalPages
@@ -78,7 +77,6 @@ function atualizar() {
 function fecharModal() {
     state.dialogVisible = false;
 }
-
 
 function fecharDevolucaoModal() {
     state.dialogVisibleDevolucao = false;
@@ -122,23 +120,23 @@ watchEffect(() => {
     loadItems(state.infoDataTableServer);
 })
 
-const emit = defineEmits(['voltar-para-leitores']);
+const emit = defineEmits(['voltar-para-livros']);
 
-const voltarParaLeitores = () => {
-    emit('voltar-para-leitores');
+const voltarParaLivros = () => {
+    emit('voltar-para-livros');
 };
 
-async function buscarLivros(livrosSearch: string) {
-    if (livrosSearch != '') {
+async function buscarLeitores(leitoresSearch: string) {
+    if (leitoresSearch != '') {
         try {
-            const encodeUriSearch = encodeURIComponent(livrosSearch);
-            const livrosList = await LivroService.findAllLivrosWithISBNFilter(encodeUriSearch);
-            state.listaLivros = livrosList;
+            const encodeUriSearch = encodeURIComponent(leitoresSearch);
+            const leitoresList = await LeitorService.findAllLeitoresWithCPFFilter(encodeUriSearch);
+            state.listaLeitores = leitoresList;
         } catch (error) {
-            console.error("Erro ao buscar a lista de livros:", error);
+            console.error("Erro ao buscar a lista de leitores:", error);
         }
-    } else if (state.listaLivros.length > 0) {
-        state.listaLivros = [];
+    } else if (state.listaLeitores.length > 0) {
+        state.listaLeitores = [];
     }
 }
 
@@ -188,15 +186,15 @@ const devolvidoOptions = createOptions(LivroDevolvido)
                         </template>
                     </v-text-field>
                     <div class="mr-2">
-                        <v-autocomplete class="mt-6" v-model="state.livro" width="200px" :items="state.listaLivros"
-                            item-title="isbn" item-value="id" return-object label="Filtrar por ISBN do Livro"
-                            variant="outlined" @update:search="buscarLivros"
-                            no-data-text="Digite algum ISBN para buscar os livros"></v-autocomplete>
+                        <v-autocomplete class="mt-6" v-model="state.leitor" width="200px" :items="state.listaLeitores"
+                            item-title="cpf" item-value="id" return-object label="Filtrar por CPF do leitor"
+                            variant="outlined" @update:search="buscarLeitores"
+                            no-data-text="Digite algum cpf para buscar os leitores"></v-autocomplete>
                     </div>
                     <div class="mr-2">
                         <v-select class="mt-6" v-model="state.devolvido" width="200px" :items="devolvidoOptions"
-                            item-title="text" item-value="value" label="Filtrar por Devolução" variant="outlined"
-                            ></v-select>
+                            item-title="text" item-value="value" label="Filtrar por Devolução"
+                            variant="outlined"></v-select>
                     </div>
                     <div class="mr-4">
                         <v-btn class="mx-2 px-2 py-7 d-flex justify-content align-center" color="blue" elevation="0"
@@ -204,14 +202,13 @@ const devolvidoOptions = createOptions(LivroDevolvido)
                             Adicionar Empréstimo
                         </v-btn>
                     </div>
-                    <v-btn @click="voltarParaLeitores" color="error"
-                        class="px-3 py-7 d-flex align-center">VOLTAR</v-btn>
+                    <v-btn @click="voltarParaLivros" color="error" class="px-3 py-7 d-flex align-center">VOLTAR</v-btn>
                 </div>
             </template>
             <template v-slot:item="{ item }">
                 <tr class="text-center">
                     <td>{{ item.id }}</td>
-                    <td>{{ item.livro.isbn }}</td>
+                    <td>{{ item.leitor.cpf }}</td>
                     <td>{{ dayjs(item.dataEmprestimo).format("DD/MM/YYYY") }}</td>
                     <td>{{ dayjs(item.dataLimite).format("DD/MM/YYYY") }}</td>
                     <td>{{ item.dataDevolucao != null ? dayjs(item.dataDevolucao).format("DD/MM/YYYY") : "A Definir" }}
@@ -241,11 +238,13 @@ const devolvidoOptions = createOptions(LivroDevolvido)
         </v-data-table-server>
     </v-card-text>
 
-    <EmprestimoForm :dialog-visible="state.dialogVisible" :leitor-id="props.leitorId"
+    <EmprestimoForm :dialog-visible="state.dialogVisible" :emprestimo-id="state.idEmprestimo" :livro-id="props.livroId"
         @submitted="atualizarQuandoFormEnviado" @canceled="fecharModal" />
 
-    <DevolucaoForm :dialog-visible="state.dialogVisibleDevolucao" :emprestimo-id="state.idEmprestimo"  @submitted="atualizarQuandoFormDevolucaoEnviado" @canceled="fecharDevolucaoModal"/>
+    <DevolucaoForm :dialog-visible="state.dialogVisibleDevolucao" :emprestimo-id="state.idEmprestimo"
+        @submitted="atualizarQuandoFormDevolucaoEnviado" @canceled="fecharDevolucaoModal" />
 
-    <RenovacaoForm :dialog-visible="state.dialogVisibleRenovacao" :emprestimo-id="state.idEmprestimo"  @submitted="atualizarQuandoFormRenovacaoEnviado" @canceled="fecharRenovacaoModal"/>
+    <RenovacaoForm :dialog-visible="state.dialogVisibleRenovacao" :emprestimo-id="state.idEmprestimo"
+        @submitted="atualizarQuandoFormRenovacaoEnviado" @canceled="fecharRenovacaoModal" />
 
 </template>

@@ -8,6 +8,7 @@ import DialogDelete from '@/components/DialogDelete.vue';
 import LeitorService from '@/api/LeitorService';
 import LeitorEmprestimos from './LeitorEmprestimos.vue';
 import LeitorForm from './LeitorForm.vue';
+import LeitorReservas from './LeitorReservas.vue';
 
 const constant: {
     cabecalhoLeitores: DataTableHeader[];
@@ -40,6 +41,7 @@ const state = reactive({
     infoDataTableServer: {} as InfoDataTableServer,
     idLeitor: null as unknown as number,
     exibirEmprestimosLeitor: false as boolean,
+    exibirReservasLeitor: false as boolean
 })
 
 function loadItems({ search, page, itemsPerPage, sortBy }: InfoDataTableServer) {
@@ -99,32 +101,42 @@ function exibirEmprestimosLeitor(idLeitor: number) {
     state.idLeitor = idLeitor;
 }
 
+function exibirReservasLeitor(idLeitor: number) {
+    state.exibirReservasLeitor = true;
+    state.idLeitor = idLeitor;
+}
+
 const voltarParaLeitores = () => {
     state.exibirEmprestimosLeitor = false;
+    state.exibirReservasLeitor = false;
 };
 
 function formatarCPF(cpf: string): string {
-  const formattedCPF = cpf.replace(
-    /(\d{3})(\d{3})(\d{3})(\d{2})/,
-    '$1.$2.$3-$4'
-  );
-  return formattedCPF;
+    const formattedCPF = cpf.replace(
+        /(\d{3})(\d{3})(\d{3})(\d{2})/,
+        '$1.$2.$3-$4'
+    );
+    return formattedCPF;
 }
 
 function formatarTelefone(telefone: string): string {
-  const formattedTelefone = telefone.replace(
-    /(\d{2})(\d{5})(\d{4})/,
-    '($1) $2-$3'
-  );
-  return formattedTelefone;
+    const formattedTelefone = telefone.replace(
+        /(\d{2})(\d{5})(\d{4})/,
+        '($1) $2-$3'
+    );
+    return formattedTelefone;
 }
 
 </script>
 
 <template>
-    
-    <leitor-emprestimos v-if="state.exibirEmprestimosLeitor" :dialog-visible="state.dialogVisible" :leitor-id="state.idLeitor" @submitted="atualizarQuandoFormEnviado"
-        @canceled="fecharModal" @voltar-para-leitores="voltarParaLeitores" />
+
+    <leitor-emprestimos v-if="state.exibirEmprestimosLeitor" :dialog-visible="state.dialogVisible"
+        :leitor-id="state.idLeitor" @submitted="atualizarQuandoFormEnviado" @canceled="fecharModal"
+        @voltar-para-leitores="voltarParaLeitores" />
+
+    <leitor-reservas v-else-if="state.exibirReservasLeitor" :dialog-visible="state.dialogVisible" :leitor-id="state.idLeitor"
+        @submitted="atualizarQuandoFormEnviado" @canceled="fecharModal" @voltar-para-leitores="voltarParaLeitores" />
 
     <v-card-text v-else>
         <v-data-table-server :search="state.search" :headers="constant.cabecalhoLeitores" :items="state.listaLeitores"
@@ -157,8 +169,14 @@ function formatarTelefone(telefone: string): string {
                     <td>
                         <v-tooltip text="Empréstimos" location="top">
                             <template v-slot:activator="{ props }">
-                                <v-btn icon="mdi-book" variant="text" color="info" @click="exibirEmprestimosLeitor(item.id)"
-                                    v-bind="props"></v-btn>
+                                <v-btn icon="mdi-book" variant="text" color="info"
+                                    @click="exibirEmprestimosLeitor(item.id)" v-bind="props"></v-btn>
+                            </template>
+                        </v-tooltip>
+                        <v-tooltip text="Reservas" location="top">
+                            <template v-slot:activator="{ props }">
+                                <v-btn icon="mdi-book" variant="text" color="black"
+                                    @click="exibirReservasLeitor(item.id)" v-bind="props"></v-btn>
                             </template>
                         </v-tooltip>
                         <v-tooltip text="Editar" location="top">
@@ -179,7 +197,7 @@ function formatarTelefone(telefone: string): string {
     </v-card-text>
 
     <leitor-form :dialog-visible="state.dialogVisible" :leitor-id="state.idLeitor"
-    @submitted="atualizarQuandoFormEnviado" @canceled="fecharModal" />
+        @submitted="atualizarQuandoFormEnviado" @canceled="fecharModal" />
 
     <dialog-delete v-model:dialog-visible="state.dialogDelete" @canceled="atualizarDialogDelete()"
         @submitted="deletarItem(state.idLeitor)"

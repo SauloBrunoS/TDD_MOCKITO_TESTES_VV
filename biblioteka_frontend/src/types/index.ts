@@ -40,12 +40,8 @@ export interface Usuario {
 
 export interface Emprestimo {
   id: number;
-  leitor: {
-    cpf: string;
-  };
-  livro: {
-    isbn: string;
-  };
+  leitor: Leitor
+  livro: Livro
   dataEmprestimo: string;
   dataLimite: string; 
   dataDevolucao?: string; 
@@ -54,20 +50,17 @@ export interface Emprestimo {
   multa: number;
   valorTotal: number;
   devolvido: boolean;
+  reserva: Reserva;
 };
 
 export interface Reserva {
   id: number;
-  leitor: {
-    cpf: string;
-  };
-  livro: {
-    isbn: string;
-  };
+  leitor: Leitor,
+  livro: Livro,
   dataCadastro: string; 
   dataLimite: string; 
-  quantidadeRenovacoes: number; 
   status: keyof typeof StatusReserva; 
+  emprestimo: Emprestimo
 };
 
 export interface InfoDataTableServer {

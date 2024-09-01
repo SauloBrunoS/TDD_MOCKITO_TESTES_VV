@@ -10,6 +10,8 @@ import LivroService from '@/api/LivroService';
 import ColecaoService from '@/api/ColecaoService';
 import LivroForm from './LivroForm.vue';
 import AutorService from '@/api/AutorService';
+import LivroEmprestimos from './LivroEmprestimos.vue';
+import LivroReservas from './LivroReservas.vue';
 
 const constant: {
     cabecalhoLivros: DataTableHeader[];
@@ -48,7 +50,9 @@ const state = reactive({
     colecao: null as unknown as Colecao,
     autor: null as unknown as Autor,
     listaAutores: [] as Autor[],
-    listaColecoes: [] as Colecao[]
+    listaColecoes: [] as Colecao[],
+    exibirEmprestimosLivro: false as boolean,
+    exibirReservasLivro: false as boolean
 })
 
 function loadItems({ search, page, itemsPerPage, sortBy }: InfoDataTableServer) {
@@ -133,10 +137,33 @@ async function buscarAutores(autoresSearch: string) {
     }
 }
 
+function exibirEmprestimosLivro(idLivro: number) {
+    state.exibirEmprestimosLivro = true;
+    state.idLivro = idLivro;
+}
+
+function exibirReservasLivro(idLivro: number) {
+    state.exibirReservasLivro = true;
+    state.idLivro = idLivro;
+}
+
+
+const voltarParaLivros = () => {
+    state.exibirEmprestimosLivro = false;
+    state.exibirReservasLivro=false;
+};
+
+
 </script>
 
 <template>
-    <v-card-text>
+    <livro-emprestimos v-if="state.exibirEmprestimosLivro" :dialog-visible="state.dialogVisible" :livro-id="state.idLivro" @submitted="atualizarQuandoFormEnviado"
+        @canceled="fecharModal" @voltar-para-livros="voltarParaLivros" />
+
+        <LivroReservas v-else-if="state.exibirReservasLivro" :dialog-visible="state.dialogVisible" :livro-id="state.idLivro"
+        @submitted="atualizarQuandoFormEnviado" @canceled="fecharModal" @voltar-para-livros="voltarParaLivros" />
+
+    <v-card-text v-else>
         <v-data-table-server :search="state.search" :headers="constant.cabecalhoLivros" :items="state.listaLivros"
             :items-per-page="state.pagination.pageSize" :items-length="state.pagination.total"
             :items-per-page-options="constant.itemsPerPageOptions" @update:options="loadItems">
@@ -183,12 +210,28 @@ async function buscarAutores(autoresSearch: string) {
                     <td>{{ item.numeroCopiasTotais }}</td>
 
                     <td>
+                        <v-tooltip text="Empréstimos" location="top">
+                            <template v-slot:activator="{ props }">
+                                <v-btn icon="mdi-book" variant="text" color="info" @click="exibirEmprestimosLivro(item.id)"
+                                    v-bind="props"></v-btn>
+                            </template>
+                        </v-tooltip>
+                        <v-tooltip text="Reservas" location="top">
+                            <template v-slot:activator="{ props }">
+                                <v-btn icon="mdi-book" variant="text" color="black"
+                                    @click="exibirReservasLivro(item.id)" v-bind="props"></v-btn>
+                            </template>
+                        </v-tooltip>
+                    </td>
+                    <td>
                         <v-tooltip text="Editar" location="top">
                             <template v-slot:activator="{ props }">
                                 <v-btn icon="mdi-pencil" variant="text" color="info" @click="abrirDialogForm(item.id)"
                                     v-bind="props"></v-btn>
                             </template>
                         </v-tooltip>
+                    </td>
+                    <td>
                         <v-tooltip text="Excluir" location="top">
                             <template v-slot:activator="{ props }">
                                 <v-btn-delete @click="abrirDialogDelete(item.id)" v-bind="props"></v-btn-delete>
@@ -206,4 +249,5 @@ async function buscarAutores(autoresSearch: string) {
 
     <livro-form :dialog-visible="state.dialogVisible" :livro-id="state.idLivro" @submitted="atualizarQuandoFormEnviado"
         @canceled="fecharModal" />
+    
 </template>
